@@ -41,7 +41,12 @@ export default function UpdateBanner(): JSX.Element | null {
       if (!state.manual) return null
       return <Bar tone="info" message={`Downloading version ${state.version}…`} />
     case 'downloading':
-      return null
+      // A user-initiated check keeps live progress on screen — the download can
+      // take minutes, and a vanishing banner reads as "the update died".
+      if (!state.manual) return null
+      return (
+        <Bar tone="info" message={`Downloading version ${state.version}… ${state.percent}%`} />
+      )
     case 'not-available':
       return state.manual ? <Bar tone="info" message="You're up to date." /> : null
     case 'error':

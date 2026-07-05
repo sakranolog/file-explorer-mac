@@ -36,6 +36,9 @@ function updatesEnabled(): boolean {
 /** Whether the in-flight check was triggered by the user ("Check for Updates…"). */
 let pendingManual = false
 
+/** Version of the update currently being downloaded (from `update-available`). */
+let pendingVersion = ''
+
 /** Push an update lifecycle state to every open window. */
 function broadcast(state: UpdateState): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -50,6 +53,7 @@ function wireEvents(): void {
   })
   autoUpdater.on('update-available', (info) => {
     // Stays `manual` through the download so the renderer keeps any progress UI.
+    pendingVersion = info.version
     broadcast({ status: 'available', version: info.version, manual: pendingManual })
   })
   autoUpdater.on('update-not-available', () => {
@@ -57,10 +61,13 @@ function wireEvents(): void {
     pendingManual = false
   })
   autoUpdater.on('download-progress', (p) => {
+    // The update can be large; a manual check must keep showing progress or the
+    // UI looks like the update silently died ("downloading… then nothing").
     broadcast({
       status: 'downloading',
-      version: autoUpdater.currentVersion?.version ?? '',
-      percent: Math.round(p.percent)
+      version: pendingVersion,
+      percent: Math.round(p.percent),
+      manual: pendingManual
     })
   })
   autoUpdater.on('update-downloaded', (info) => {
@@ -85,6 +92,9 @@ export function initAutoUpdater(): void {
 
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
+  // Log lifecycle to stdout so a packaged app launched from a terminal can be
+  // diagnosed; updates otherwise fail invisibly.
+  autoUpdater.logger = console
 
   wireEvents()
   // First check shortly after launch so it never competes with window paint.

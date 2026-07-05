@@ -61,7 +61,14 @@ describe('UpdateBanner', () => {
   })
 
   it('does not show a banner while silently downloading in the background', () => {
-    emit({ status: 'downloading', version: '2.3.0', percent: 50 })
+    emit({ status: 'downloading', version: '2.3.0', percent: 50, manual: false })
     expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('shows live download progress for a manual check', () => {
+    emit({ status: 'downloading', version: '2.3.0', percent: 50, manual: true })
+    expect(screen.getByText(/downloading version 2\.3\.0… 50%/i)).toBeInTheDocument()
+    emit({ status: 'downloading', version: '2.3.0', percent: 51, manual: true })
+    expect(screen.getByText(/51%/)).toBeInTheDocument()
   })
 })

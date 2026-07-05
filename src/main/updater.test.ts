@@ -126,12 +126,26 @@ describe('initAutoUpdater', () => {
     expect(sent).toHaveLength(1)
   })
 
-  it('maps download-progress to a rounded percent', async () => {
+  it('maps download-progress to a rounded percent with the update version', async () => {
     const { initAutoUpdater } = await load()
     initAutoUpdater()
+    updater.emit('update-available', { version: '2.0.0' })
     sent.length = 0
     updater.emit('download-progress', { percent: 42.7 })
-    expect(lastState()).toMatchObject({ status: 'downloading', percent: 43 })
+    expect(lastState()).toMatchObject({
+      status: 'downloading',
+      percent: 43,
+      version: '2.0.0',
+      manual: false
+    })
+  })
+
+  it('keeps download progress flagged manual for a user-initiated check', async () => {
+    const { checkForUpdates } = await load()
+    checkForUpdates()
+    updater.emit('update-available', { version: '2.0.0' })
+    updater.emit('download-progress', { percent: 10 })
+    expect(lastState()).toMatchObject({ status: 'downloading', percent: 10, manual: true })
   })
 })
 

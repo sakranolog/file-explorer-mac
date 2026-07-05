@@ -133,7 +133,7 @@ export type UpdateState =
   | { status: 'checking'; manual: boolean }
   | { status: 'available'; version: string; manual: boolean }
   | { status: 'not-available'; manual: boolean }
-  | { status: 'downloading'; version: string; percent: number }
+  | { status: 'downloading'; version: string; percent: number; manual: boolean }
   | { status: 'downloaded'; version: string }
   | { status: 'error'; message: string; manual: boolean }
 
