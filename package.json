@@ -1,6 +1,6 @@
 {
   "name": "file-explorer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A modern, tabbed file manager for macOS (Intel & Apple Silicon)",
   "main": "./out/main/index.js",
   "author": "File Explorer",
