@@ -39,8 +39,22 @@ let pendingManual = false
 /** Version of the update currently being downloaded (from `update-available`). */
 let pendingVersion = ''
 
+/**
+ * True from the moment a check starts until it reaches a terminal state
+ * (not-available / downloaded / error). While set, a manual "Check for
+ * Updates…" must NOT call checkForUpdates() again: with autoDownload on, the
+ * launch auto-check is usually still downloading, and a second concurrent
+ * download of the same file makes the final temp-file rename fail with ENOENT —
+ * the update dies at 100%.
+ */
+let activityInFlight = false
+
+/** Last state broadcast, so a manual re-check can re-surface live progress. */
+let lastBroadcast: UpdateState | null = null
+
 /** Push an update lifecycle state to every open window. */
 function broadcast(state: UpdateState): void {
+  lastBroadcast = state
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send(IPC.updateStatus, state)
   }
@@ -59,6 +73,7 @@ function wireEvents(): void {
   autoUpdater.on('update-not-available', () => {
     broadcast({ status: 'not-available', manual: pendingManual })
     pendingManual = false
+    activityInFlight = false
   })
   autoUpdater.on('download-progress', (p) => {
     // The update can be large; a manual check must keep showing progress or the
@@ -73,10 +88,12 @@ function wireEvents(): void {
   autoUpdater.on('update-downloaded', (info) => {
     broadcast({ status: 'downloaded', version: info.version })
     pendingManual = false
+    activityInFlight = false
   })
   autoUpdater.on('error', (err) => {
     broadcast({ status: 'error', message: err?.message ?? String(err), manual: pendingManual })
     pendingManual = false
+    activityInFlight = false
   })
 }
 
@@ -104,6 +121,7 @@ export function initAutoUpdater(): void {
 /** Run a check, swallowing the promise rejection (errors arrive via the event). */
 function runCheck(manual: boolean): Promise<unknown> {
   pendingManual = manual
+  activityInFlight = true
   return autoUpdater.checkForUpdates().catch(() => {
     // The 'error' event already broadcast a user-facing message.
   })
@@ -122,7 +140,28 @@ export function checkForUpdates(): void {
     })
     return
   }
-  if (!initialized) initAutoUpdater()
+  if (!initialized) {
+    // initAutoUpdater kicks off the first check itself; adopt it as manual
+    // (after — its runCheck(false) resets the flag).
+    initAutoUpdater()
+    pendingManual = true
+    return
+  }
+  if (activityInFlight) {
+    // The launch auto-check is still working (often mid-download). Starting a
+    // second concurrent download corrupts the staged file, so instead adopt the
+    // in-flight one as manual and re-surface its current state in the UI.
+    pendingManual = true
+    const s = lastBroadcast
+    if (s) {
+      if (s.status === 'checking' || s.status === 'available' || s.status === 'downloading') {
+        broadcast({ ...s, manual: true })
+      } else {
+        broadcast(s)
+      }
+    }
+    return
+  }
   void runCheck(true)
 }
 

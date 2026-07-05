@@ -147,6 +147,42 @@ describe('initAutoUpdater', () => {
     updater.emit('download-progress', { percent: 10 })
     expect(lastState()).toMatchObject({ status: 'downloading', percent: 10, manual: true })
   })
+
+  it('a manual check during an in-flight download does not start a second one', async () => {
+    // Two concurrent checkForUpdates() → two downloads of the same temp file →
+    // the loser's rename fails with ENOENT and the update dies at 100%.
+    const { initAutoUpdater, checkForUpdates } = await load()
+    initAutoUpdater() // launch auto-check
+    updater.emit('update-available', { version: '2.0.0' })
+    updater.emit('download-progress', { percent: 40 })
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1)
+
+    checkForUpdates() // user clicks "Check for Updates…" mid-download
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1) // no second check
+    // The in-flight download is adopted as manual and its progress re-surfaces.
+    expect(lastState()).toMatchObject({ status: 'downloading', percent: 40, manual: true })
+    updater.emit('download-progress', { percent: 41 })
+    expect(lastState()).toMatchObject({ status: 'downloading', percent: 41, manual: true })
+  })
+
+  it('a manual check after a completed download is allowed to run again', async () => {
+    const { initAutoUpdater, checkForUpdates } = await load()
+    initAutoUpdater()
+    updater.emit('update-available', { version: '2.0.0' })
+    updater.emit('update-downloaded', { version: '2.0.0' })
+    sent.length = 0
+    checkForUpdates()
+    // Terminal state reached — a fresh check is allowed again.
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2)
+  })
+
+  it('a manual check after a failed check runs a fresh one', async () => {
+    const { initAutoUpdater, checkForUpdates } = await load()
+    initAutoUpdater()
+    updater.emit('error', new Error('network down'))
+    checkForUpdates()
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('checkForUpdates (manual)', () => {
