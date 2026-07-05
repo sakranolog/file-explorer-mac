@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 cask "file-explorer" do
-  version "1.0.1"
-  sha256 "67b84c0909ac5725197105ec1120a975db37d1ab771386567467e6ee5ebb3b63"
+  version "1.0.2"
+  sha256 "91585bac004fa231cdba33284a67a03bda2efb75b67caff08f960dacc95e37e1"
 
   url "https://github.com/file-explorer-mac/file-explorer-mac/releases/download/v#{version}/File-Explorer-#{version}-universal.dmg",
       verified: "github.com/file-explorer-mac/file-explorer-mac/"
