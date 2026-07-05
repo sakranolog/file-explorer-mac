@@ -16,7 +16,7 @@ describe('IPC channel map', () => {
   })
 
   it('has every channel value namespaced with a "<scope>:<name>" prefix', () => {
-    const allowedScopes = new Set(['fs', 'app', 'win', 'dnd', 'update'])
+    const allowedScopes = new Set(['fs', 'app', 'win', 'dnd', 'update', 'clip'])
     for (const value of Object.values(IPC)) {
       expect(value).toMatch(/^[a-z]+:[A-Za-z]+$/)
       expect(allowedScopes.has(value.split(':')[0])).toBe(true)
@@ -44,6 +44,9 @@ describe('IPC channel map', () => {
         'revealInFinder',
         'getThumbnail',
         'startDrag',
+        'clipboardWriteFiles',
+        'clipboardReadFiles',
+        'clipboardClear',
         'openFullDiskAccessSettings',
         'createFolder',
         'createTextFile',

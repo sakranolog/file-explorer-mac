@@ -17,6 +17,9 @@ const api: FileExplorerApi = {
   revealInFinder: (p) => ipcRenderer.invoke(IPC.revealInFinder, p),
   getThumbnail: (p, size) => ipcRenderer.invoke(IPC.getThumbnail, p, size),
   startDrag: (paths) => ipcRenderer.send(IPC.startDrag, paths),
+  clipboardWriteFiles: (paths) => ipcRenderer.invoke(IPC.clipboardWriteFiles, paths),
+  clipboardReadFiles: () => ipcRenderer.invoke(IPC.clipboardReadFiles),
+  clipboardClear: () => ipcRenderer.invoke(IPC.clipboardClear),
   openFullDiskAccessSettings: () => ipcRenderer.send(IPC.openFullDiskAccessSettings),
 
   createFolder: (dir, name) => ipcRenderer.invoke(IPC.createFolder, dir, name),

@@ -156,6 +156,12 @@ export interface FileExplorerApi {
   getThumbnail(path: string, size: number): Promise<Result<string>>
   /** Begin a native OS file drag so items can be dropped into other apps. */
   startDrag(paths: string[]): void
+  /** Put file references on the OS clipboard so Finder & other apps can paste them. */
+  clipboardWriteFiles(paths: string[]): Promise<void>
+  /** File paths currently on the OS clipboard (e.g. copied in Finder); [] if none. */
+  clipboardReadFiles(): Promise<string[]>
+  /** Clear the OS clipboard (after pasting a cut, which must only paste once). */
+  clipboardClear(): Promise<void>
   /** Opens System Settings at Privacy & Security > Full Disk Access. */
   openFullDiskAccessSettings(): void
 
@@ -223,6 +229,9 @@ export const IPC = {
   revealInFinder: 'fs:revealInFinder',
   getThumbnail: 'fs:getThumbnail',
   startDrag: 'dnd:startDrag',
+  clipboardWriteFiles: 'clip:writeFiles',
+  clipboardReadFiles: 'clip:readFiles',
+  clipboardClear: 'clip:clear',
   openFullDiskAccessSettings: 'app:openFullDiskAccessSettings',
   createFolder: 'fs:createFolder',
   createTextFile: 'fs:createTextFile',

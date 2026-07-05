@@ -71,6 +71,26 @@ describe('selectVisibleItems', () => {
     expect(out.map((i) => i.name)).toEqual(['old', 'new'])
   })
 
+  it('breaks modified-date ties by name in both directions', () => {
+    const b = makeFileItem({ name: 'b.txt', path: '/p/b.txt', modified: 100 })
+    const a = makeFileItem({ name: 'a.txt', path: '/p/a.txt', modified: 100 })
+    const c = makeFileItem({ name: 'c.txt', path: '/p/c.txt', modified: 100 })
+    const asc = selectVisibleItems({
+      items: [b, c, a],
+      showHidden: true,
+      sortKey: 'modified',
+      sortDir: 'asc'
+    })
+    expect(asc.map((i) => i.name)).toEqual(['a.txt', 'b.txt', 'c.txt'])
+    const desc = selectVisibleItems({
+      items: [c, b, a],
+      showHidden: true,
+      sortKey: 'modified',
+      sortDir: 'desc'
+    })
+    expect(desc.map((i) => i.name)).toEqual(['a.txt', 'b.txt', 'c.txt'])
+  })
+
   it('sorts by size', () => {
     const small = makeFileItem({ name: 'small', path: '/p/small', size: 10 })
     const big = makeFileItem({ name: 'big', path: '/p/big', size: 9999 })

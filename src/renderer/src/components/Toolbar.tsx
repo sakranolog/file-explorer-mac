@@ -16,6 +16,7 @@ interface OpenMenu {
 const Toolbar: React.FC = () => {
   const selection = useExplorerStore((s) => s.selection)
   const clipboard = useExplorerStore((s) => s.clipboard)
+  const osClipboardHasFiles = useExplorerStore((s) => s.osClipboardHasFiles)
   const viewMode = useExplorerStore((s) => s.viewMode)
   const sortKey = useExplorerStore((s) => s.sortKey)
   const sortDir = useExplorerStore((s) => s.sortDir)
@@ -161,7 +162,7 @@ const Toolbar: React.FC = () => {
         type="button"
         className={styles.button}
         title="Paste  Ctrl+V"
-        disabled={clipboard === null}
+        disabled={clipboard === null && !osClipboardHasFiles}
         onClick={() => void useExplorerStore.getState().paste()}
       >
         <Icon name="paste" size={16} />

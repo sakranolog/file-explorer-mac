@@ -132,6 +132,8 @@ interface ExplorerState {
 
   // Clipboard
   clipboard: Clipboard | null
+  /** Whether the OS clipboard holds files (enables Paste for external copies). */
+  osClipboardHasFiles: boolean
 
   // Search
   searchQuery: string
@@ -181,6 +183,8 @@ interface ExplorerState {
   copySelection: () => void
   cutSelection: () => void
   paste: () => Promise<void>
+  /** Re-check whether the OS clipboard holds files (e.g. after refocusing the app). */
+  refreshClipboardStatus: () => Promise<void>
 
   beginRename: (path: string) => void
   commitRename: (newName: string) => Promise<void>
@@ -314,6 +318,7 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
   anchorPath: null,
 
   clipboard: null,
+  osClipboardHasFiles: false,
 
   searchQuery: '',
   isSearchResults: false,
@@ -328,7 +333,10 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
     if (!progressSubscribed) {
       progressSubscribed = true
       window.api.onOpProgress((p) => set({ operation: p }))
+      // Files may have been copied elsewhere (Finder) while we were unfocused.
+      window.addEventListener('focus', () => void get().refreshClipboardStatus())
     }
+    void get().refreshClipboardStatus()
     const [homeDir, rawQuickLinks, drives] = await Promise.all([
       window.api.getHomeDir(),
       window.api.getQuickLinks(),
@@ -513,6 +521,9 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
   setSort: (key) => {
     set((s) => {
       if (s.sortKey === key) return { sortDir: s.sortDir === 'asc' ? 'desc' : 'asc' }
+      // Familiar file-manager defaults: picking a date/size sort starts with
+      // newest/largest first; name/type start ascending.
+      if (key === 'modified' || key === 'size') return { sortKey: key, sortDir: 'desc' }
       return { sortKey: key, sortDir: 'asc' }
     })
     persist(get())
@@ -576,19 +587,45 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
 
   copySelection: () => {
     const paths = [...get().selection]
-    if (paths.length) set({ clipboard: { paths, mode: 'copy' } })
+    if (!paths.length) return
+    set({ clipboard: { paths, mode: 'copy' }, osClipboardHasFiles: true })
+    // Also put the files on the OS clipboard so pasting works in Finder & co.
+    void window.api.clipboardWriteFiles(paths)
   },
 
   cutSelection: () => {
     const paths = [...get().selection]
-    if (paths.length) set({ clipboard: { paths, mode: 'cut' } })
+    if (!paths.length) return
+    set({ clipboard: { paths, mode: 'cut' }, osClipboardHasFiles: true })
+    // Other apps have no "cut" notion; pasting there behaves like a copy.
+    void window.api.clipboardWriteFiles(paths)
   },
 
   paste: async () => {
     const { clipboard, currentPath } = get()
-    if (!clipboard || !clipboard.paths.length || currentPath === HOME_PATH) return
-    const op = clipboard.mode === 'cut' ? 'move' : 'copy'
-    await get().performTransfer(clipboard.paths, currentPath, op, clipboard.mode === 'cut')
+    if (currentPath === HOME_PATH) return
+    // The OS clipboard is the source of truth, so files copied in Finder (or
+    // another window) paste here too. Our internal clipboard only upgrades a
+    // paste of our own cut to a move.
+    const osPaths = await window.api.clipboardReadFiles()
+    const paths = osPaths.length ? osPaths : (clipboard?.paths ?? [])
+    if (!paths.length) return
+    const isOwn =
+      !!clipboard &&
+      clipboard.paths.length === paths.length &&
+      paths.every((p) => clipboard.paths.includes(p))
+    const isCut = isOwn && clipboard.mode === 'cut'
+    await get().performTransfer(paths, currentPath, isCut ? 'move' : 'copy', isCut)
+    if (isCut) {
+      // A cut pastes once; the sources no longer exist at their old paths.
+      set({ osClipboardHasFiles: false })
+      void window.api.clipboardClear()
+    }
+  },
+
+  refreshClipboardStatus: async () => {
+    const paths = await window.api.clipboardReadFiles()
+    set({ osClipboardHasFiles: paths.length > 0 })
   },
 
   beginRename: (path) => set({ renamingPath: path, selection: new Set([path]) }),
@@ -679,7 +716,11 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
     void get().loadDir(get().currentPath)
   },
 
-  openContextMenu: (x, y, targetPath) => set({ contextMenu: { x, y, targetPath } }),
+  openContextMenu: (x, y, targetPath) => {
+    set({ contextMenu: { x, y, targetPath } })
+    // Keep the Paste entry's enabled state honest about external copies.
+    void get().refreshClipboardStatus()
+  },
   closeContextMenu: () => set({ contextMenu: null }),
 
   flashStatus: (msg) => {
@@ -893,7 +934,9 @@ function computeVisibleItems(state: {
           typeCollator.compare(a.name, b.name)
         break
     }
-    return cmp * dir
+    // Items that tie (same date, same size, …) stay in name order either
+    // direction, instead of the arbitrary on-disk order.
+    return cmp !== 0 ? cmp * dir : nameCollator.compare(a.name, b.name)
   })
   return sorted
 }

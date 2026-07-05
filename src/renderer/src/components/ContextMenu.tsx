@@ -34,6 +34,7 @@ const ContextMenu: React.FC = () => {
   const items = useExplorerStore((s) => s.items)
   const selection = useExplorerStore((s) => s.selection)
   const clipboard = useExplorerStore((s) => s.clipboard)
+  const osClipboardHasFiles = useExplorerStore((s) => s.osClipboardHasFiles)
   const viewMode = useExplorerStore((s) => s.viewMode)
   const sortKey = useExplorerStore((s) => s.sortKey)
   const sortDir = useExplorerStore((s) => s.sortDir)
@@ -104,7 +105,7 @@ const ContextMenu: React.FC = () => {
         label: 'Paste',
         icon: 'paste',
         shortcut: 'Ctrl+V',
-        disabled: clipboard === null,
+        disabled: clipboard === null && !osClipboardHasFiles,
         onClick: () => void paste()
       },
       {
@@ -210,7 +211,7 @@ const ContextMenu: React.FC = () => {
         label: 'Paste',
         icon: 'paste',
         shortcut: 'Ctrl+V',
-        disabled: clipboard === null,
+        disabled: clipboard === null && !osClipboardHasFiles,
         onClick: () => void paste()
       },
       {

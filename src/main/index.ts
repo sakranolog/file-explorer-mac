@@ -3,6 +3,7 @@ import { join, dirname } from 'path'
 import { existsSync, writeFileSync, statSync } from 'fs'
 import { IPC, type ConflictPolicy } from '../shared/types'
 import * as FS from './fileSystem'
+import * as CB from './clipboard'
 import { trackAppStarted } from './analytics'
 import { initAutoUpdater, checkForUpdates, installUpdate } from './updater'
 import { installAppMenu } from './menu'
@@ -182,14 +183,29 @@ function registerIpc(): void {
   ipcMain.handle(IPC.openPath, (_e, p: string) => FS.openPath(p))
   ipcMain.handle(IPC.revealInFinder, (_e, p: string) => FS.revealInFinder(p))
   ipcMain.handle(IPC.getThumbnail, (_e, p: string, size: number) => FS.getThumbnail(p, size))
-  ipcMain.on(IPC.startDrag, (e, paths: string[]) => {
+  ipcMain.on(IPC.startDrag, async (e, paths: string[]) => {
     if (!Array.isArray(paths) || paths.length === 0) return
+    // Use the OS's own icon for the dragged file. The bundled-icon fallback is a
+    // last resort: it isn't shipped inside the packaged app, and its final 1x1
+    // transparent fallback makes the drag invisible — which reads as broken.
+    let icon: Electron.NativeImage | null = null
     try {
-      e.sender.startDrag({ file: paths[0], files: paths, icon: dragIcon() })
+      icon = await app.getFileIcon(paths[0], { size: 'normal' })
+    } catch {
+      /* fall through to the bundled icon */
+    }
+    if (!icon || icon.isEmpty()) icon = dragIcon()
+    try {
+      e.sender.startDrag({ file: paths[0], files: paths, icon })
     } catch (err) {
       console.error('[startDrag] failed', err)
     }
   })
+  ipcMain.handle(IPC.clipboardWriteFiles, (_e, paths: string[]) => {
+    if (Array.isArray(paths)) CB.writeFiles(paths.filter((p) => typeof p === 'string'))
+  })
+  ipcMain.handle(IPC.clipboardReadFiles, () => CB.readFiles())
+  ipcMain.handle(IPC.clipboardClear, () => CB.clear())
   ipcMain.on(IPC.openFullDiskAccessSettings, () => {
     // Full Disk Access cannot be requested via a dialog; deep-link to its pane.
     shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles')

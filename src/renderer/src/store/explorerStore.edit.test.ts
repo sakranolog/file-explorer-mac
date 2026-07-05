@@ -119,16 +119,18 @@ describe('clipboard', () => {
     expect(store().clipboard).toBeNull()
   })
 
-  it('copySelection captures the selection in copy mode', () => {
+  it('copySelection captures the selection in copy mode and mirrors it to the OS', () => {
     useExplorerStore.setState({ selection: new Set(['/p/a.txt']) })
     store().copySelection()
     expect(store().clipboard).toEqual({ paths: ['/p/a.txt'], mode: 'copy' })
+    expect(api.clipboardWriteFiles).toHaveBeenCalledWith(['/p/a.txt'])
   })
 
-  it('cutSelection captures the selection in cut mode', () => {
+  it('cutSelection captures the selection in cut mode and mirrors it to the OS', () => {
     useExplorerStore.setState({ selection: new Set(['/p/a.txt']) })
     store().cutSelection()
     expect(store().clipboard).toEqual({ paths: ['/p/a.txt'], mode: 'cut' })
+    expect(api.clipboardWriteFiles).toHaveBeenCalledWith(['/p/a.txt'])
   })
 
   it('paste no-ops with no clipboard', async () => {
@@ -160,6 +162,46 @@ describe('clipboard', () => {
     })
     await store().paste()
     expect(api.copy).toHaveBeenCalledWith(['/p/a.txt'], '/dest', 'keep-both')
+  })
+
+  it('paste copies files put on the OS clipboard by another app', async () => {
+    api.clipboardReadFiles.mockResolvedValue(['/finder/f.txt'])
+    useExplorerStore.setState({ currentPath: '/dest', clipboard: null })
+    await store().paste()
+    expect(api.copy).toHaveBeenCalledWith(['/finder/f.txt'], '/dest', 'keep-both')
+  })
+
+  it('paste of our own cut still moves when the OS clipboard echoes the same files', async () => {
+    api.clipboardReadFiles.mockResolvedValue(['/p/a.txt'])
+    useExplorerStore.setState({
+      currentPath: '/dest',
+      clipboard: { paths: ['/p/a.txt'], mode: 'cut' }
+    })
+    await store().paste()
+    expect(api.move).toHaveBeenCalledWith(['/p/a.txt'], '/dest', 'keep-both')
+    expect(api.clipboardClear).toHaveBeenCalled()
+    expect(store().osClipboardHasFiles).toBe(false)
+  })
+
+  it('an external copy supersedes a stale internal cut (copies, does not move)', async () => {
+    api.clipboardReadFiles.mockResolvedValue(['/finder/other.txt'])
+    useExplorerStore.setState({
+      currentPath: '/dest',
+      clipboard: { paths: ['/p/a.txt'], mode: 'cut' }
+    })
+    await store().paste()
+    expect(api.copy).toHaveBeenCalledWith(['/finder/other.txt'], '/dest', 'keep-both')
+    expect(api.move).not.toHaveBeenCalled()
+    expect(api.clipboardClear).not.toHaveBeenCalled()
+  })
+
+  it('refreshClipboardStatus reflects whether the OS clipboard holds files', async () => {
+    api.clipboardReadFiles.mockResolvedValue(['/finder/f.txt'])
+    await store().refreshClipboardStatus()
+    expect(store().osClipboardHasFiles).toBe(true)
+    api.clipboardReadFiles.mockResolvedValue([])
+    await store().refreshClipboardStatus()
+    expect(store().osClipboardHasFiles).toBe(false)
   })
 })
 
@@ -419,11 +461,24 @@ describe('view / panel preferences', () => {
     expect(store().sortDir).toBe('asc')
   })
 
-  it('setSort switches key and resets to asc', () => {
-    useExplorerStore.setState({ sortKey: 'name', sortDir: 'desc' })
+  it('setSort switches to name/type starting ascending', () => {
+    useExplorerStore.setState({ sortKey: 'size', sortDir: 'desc' })
+    store().setSort('name')
+    expect(store().sortKey).toBe('name')
+    expect(store().sortDir).toBe('asc')
+    store().setSort('type')
+    expect(store().sortKey).toBe('type')
+    expect(store().sortDir).toBe('asc')
+  })
+
+  it('setSort switches to date/size starting descending (newest/largest first)', () => {
+    useExplorerStore.setState({ sortKey: 'name', sortDir: 'asc' })
+    store().setSort('modified')
+    expect(store().sortKey).toBe('modified')
+    expect(store().sortDir).toBe('desc')
     store().setSort('size')
     expect(store().sortKey).toBe('size')
-    expect(store().sortDir).toBe('asc')
+    expect(store().sortDir).toBe('desc')
   })
 
   it('toggleShowHidden flips the flag', () => {

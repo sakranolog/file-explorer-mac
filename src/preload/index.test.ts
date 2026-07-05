@@ -190,6 +190,18 @@ describe('invoke-based methods', () => {
     api.openInTerminal('/dir')
     expect(ipcRenderer.invoke).toHaveBeenCalledWith(IPC.openInTerminal, '/dir')
   })
+  it('clipboardWriteFiles', () => {
+    api.clipboardWriteFiles(['/a', '/b'])
+    expect(ipcRenderer.invoke).toHaveBeenCalledWith(IPC.clipboardWriteFiles, ['/a', '/b'])
+  })
+  it('clipboardReadFiles', () => {
+    api.clipboardReadFiles()
+    expect(ipcRenderer.invoke).toHaveBeenCalledWith(IPC.clipboardReadFiles)
+  })
+  it('clipboardClear', () => {
+    api.clipboardClear()
+    expect(ipcRenderer.invoke).toHaveBeenCalledWith(IPC.clipboardClear)
+  })
 })
 
 describe('send-based methods', () => {

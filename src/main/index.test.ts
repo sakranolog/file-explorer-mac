@@ -167,6 +167,7 @@ const appMock = {
   isReady: (...a: unknown[]) => appState.isReady(...a),
   getAppPath: vi.fn().mockReturnValue('/app'),
   getPath: vi.fn().mockReturnValue('/userData'),
+  getFileIcon: vi.fn(),
   dock: { setIcon: vi.fn() },
   quit: vi.fn(),
   get isPackaged() {
@@ -215,6 +216,13 @@ vi.mock('electron', () => ({
 // Analytics is exercised in analytics.test.ts; here we only verify it's invoked.
 vi.mock('./analytics', () => ({ trackAppStarted: vi.fn() }))
 
+// Clipboard module has its own suite; index only wires the IPC to it.
+vi.mock('./clipboard', () => ({
+  writeFiles: vi.fn(),
+  readFiles: vi.fn().mockReturnValue([]),
+  clear: vi.fn()
+}))
+
 // Updater + menu have their own suites; stub them so index just wires them up.
 vi.mock('./updater', () => ({
   initAutoUpdater: vi.fn(),
@@ -224,6 +232,7 @@ vi.mock('./updater', () => ({
 vi.mock('./menu', () => ({ installAppMenu: vi.fn() }))
 
 import * as FS from './fileSystem'
+import * as CB from './clipboard'
 import { trackAppStarted } from './analytics'
 import { initAutoUpdater, checkForUpdates, installUpdate } from './updater'
 import { installAppMenu } from './menu'
@@ -276,6 +285,7 @@ function resetAll(): void {
   appMock.whenReady.mockResolvedValue(undefined)
   appMock.getAppPath.mockReturnValue('/app')
   appMock.getPath.mockReturnValue('/userData')
+  appMock.getFileIcon.mockResolvedValue(makeImg(false))
   BrowserWindowMock.getFocusedWindow.mockReturnValue(null)
   BrowserWindowMock.fromWebContents.mockReturnValue(null)
   dialogMock.showOpenDialog.mockResolvedValue({ canceled: true, filePaths: [] })
@@ -579,16 +589,31 @@ describe('ipc handlers route into FS', () => {
     expect(send).toHaveBeenCalledWith(IPC.opProgress, { percent: 99 })
   })
 
-  it('startDrag ignores empty/non-array and starts a drag with cached icon', async () => {
+  it('startDrag ignores empty/non-array and drags with the file OS icon', async () => {
     const startDrag = vi.fn()
     const ev = { sender: { startDrag } }
-    ipcOn[IPC.startDrag](ev, [])
-    ipcOn[IPC.startDrag](ev, 'not-array')
+    await ipcOn[IPC.startDrag](ev, [])
+    await ipcOn[IPC.startDrag](ev, 'not-array')
     expect(startDrag).not.toHaveBeenCalled()
-    ipcOn[IPC.startDrag](ev, ['/a', '/b'])
+    const fileIcon = makeImg(false)
+    appMock.getFileIcon.mockResolvedValue(fileIcon)
+    await ipcOn[IPC.startDrag](ev, ['/a', '/b'])
+    expect(appMock.getFileIcon).toHaveBeenCalledWith('/a', { size: 'normal' })
     expect(startDrag).toHaveBeenCalledWith({
       file: '/a',
       files: ['/a', '/b'],
+      icon: fileIcon
+    })
+  })
+
+  it('startDrag falls back to the bundled icon when getFileIcon fails', async () => {
+    const startDrag = vi.fn()
+    const ev = { sender: { startDrag } }
+    appMock.getFileIcon.mockRejectedValue(new Error('no icon'))
+    await ipcOn[IPC.startDrag](ev, ['/a'])
+    expect(startDrag).toHaveBeenCalledWith({
+      file: '/a',
+      files: ['/a'],
       icon: expect.anything()
     })
   })
@@ -602,9 +627,21 @@ describe('ipc handlers route into FS', () => {
         })
       }
     }
-    ipcOn[IPC.startDrag](ev, ['/a'])
+    await ipcOn[IPC.startDrag](ev, ['/a'])
     expect(errSpy).toHaveBeenCalledWith('[startDrag] failed', expect.any(Error))
     errSpy.mockRestore()
+  })
+
+  it('clipboard IPC delegates to the clipboard module', async () => {
+    const ev = {}
+    await ipcHandle[IPC.clipboardWriteFiles](ev, ['/a', 7, '/b'])
+    expect(CB.writeFiles).toHaveBeenCalledWith(['/a', '/b'])
+    await ipcHandle[IPC.clipboardWriteFiles](ev, 'not-array')
+    expect(CB.writeFiles).toHaveBeenCalledTimes(1)
+    await ipcHandle[IPC.clipboardReadFiles](ev)
+    expect(CB.readFiles).toHaveBeenCalled()
+    await ipcHandle[IPC.clipboardClear](ev)
+    expect(CB.clear).toHaveBeenCalled()
   })
 
   it('openFullDiskAccessSettings deep-links to the preference pane', async () => {
@@ -691,25 +728,28 @@ describe('window control ipc', () => {
 })
 
 describe('dragIcon caching and fallbacks', () => {
+  // dragIcon only runs when the OS won't provide a file icon.
   it('falls back to data URL when appIconPath is empty', async () => {
     // No icon file found -> createEmpty -> isEmpty true -> createFromDataURL
     fsState.existsSync.mockReturnValue(false)
     await loadModule()
+    appMock.getFileIcon.mockRejectedValue(new Error('no icon'))
     const startDrag = vi.fn()
-    ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/a'])
+    await ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/a'])
     expect(nativeImageMock.createEmpty).toHaveBeenCalled()
     expect(nativeImageMock.createFromDataURL).toHaveBeenCalled()
     // second call uses cached icon (createFromDataURL not called again)
     nativeImageMock.createFromDataURL.mockClear()
-    ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/b'])
+    await ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/b'])
     expect(nativeImageMock.createFromDataURL).not.toHaveBeenCalled()
   })
 
   it('resizes a real icon when one exists', async () => {
     fsState.existsSync.mockReturnValue(true)
     await loadModule()
+    appMock.getFileIcon.mockResolvedValue(makeImg(true)) // empty OS icon -> fallback
     const startDrag = vi.fn()
-    ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/a'])
+    await ipcOn[IPC.startDrag]({ sender: { startDrag } }, ['/a'])
     expect(nativeImageMock.createFromPath).toHaveBeenCalled()
   })
 })
