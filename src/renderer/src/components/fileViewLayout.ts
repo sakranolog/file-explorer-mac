@@ -52,12 +52,20 @@ export const DETAILS_MIN_FILL = 80
 /** Horizontal padding of the details content box; mirrors METRICS.details.padX. */
 export const DETAILS_PAD_X = 8
 
-/** `grid-template-columns` for a details header/row at the given widths. */
+/**
+ * `grid-template-columns` for a details header/row at the given widths.
+ *
+ * The fixed tracks are `minmax(0, Npx)`: they take their full width whenever
+ * there is room — which is what keeps a resize grip under the cursor — but
+ * shrink instead of overflowing when the pane is too narrow for them. Letting
+ * them overflow would scroll the rows horizontally out from under the header,
+ * which is a flex child sized to the container rather than to the scroll width.
+ */
 export function detailsGridTemplate(widths: Record<string, number>): string {
   const name = widths.name ?? DETAILS_COLUMN_DEFAULTS.name
   const date = widths.date ?? DETAILS_COLUMN_DEFAULTS.date
   const type = widths.type ?? DETAILS_COLUMN_DEFAULTS.type
-  return `${name}px ${date}px ${type}px minmax(${DETAILS_MIN_FILL}px, 1fr)`
+  return `minmax(0, ${name}px) minmax(0, ${date}px) minmax(0, ${type}px) minmax(${DETAILS_MIN_FILL}px, 1fr)`
 }
 
 export interface GridLayout {
