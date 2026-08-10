@@ -7,9 +7,9 @@
 Browse, preview, and organize your files with a native, dark-mode-ready interface —
 built for both Apple Silicon and Intel.
 
-[![Download](https://img.shields.io/github/v/release/file-explorer-mac/file-explorer-mac?label=Download&style=for-the-badge)](https://github.com/file-explorer-mac/file-explorer-mac/releases/latest)
+[![Download](https://img.shields.io/github/v/release/sakranolog/file-explorer-mac?label=Download&style=for-the-badge)](https://github.com/sakranolog/file-explorer-mac/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge)](LICENSE)
-[![Platform](https://img.shields.io/badge/macOS-Universal%20(Apple%20Silicon%20%2B%20Intel)-black?style=for-the-badge&logo=apple)](https://github.com/file-explorer-mac/file-explorer-mac#-download)
+[![Platform](https://img.shields.io/badge/macOS-Universal%20(Apple%20Silicon%20%2B%20Intel)-black?style=for-the-badge&logo=apple)](https://github.com/sakranolog/file-explorer-mac#-download)
 
 <img src="docs/screenshots/hero.png" alt="File Explorer for macOS — a modern, tabbed file manager" width="820">
 
@@ -40,7 +40,7 @@ open-sourced it.
 
 ## 📥 Download
 
-Grab the latest `.dmg` from the [**Releases page**](https://github.com/file-explorer-mac/file-explorer-mac/releases/latest),
+Grab the latest `.dmg` from the [**Releases page**](https://github.com/sakranolog/file-explorer-mac/releases/latest),
 open it, and drag **File Explorer** into your Applications folder.
 
 Because the app is signed with a Developer ID and notarized by Apple, it launches

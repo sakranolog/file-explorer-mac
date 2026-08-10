@@ -53,7 +53,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "file-explorer-mac",
+      "owner": "sakranolog",
       "repo": "file-explorer-mac"
     },
     "files": [
