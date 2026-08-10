@@ -53,7 +53,11 @@ const PreviewPane: React.FC = () => {
   if (!previewOpen) return null
 
   return (
-    <aside className={styles.pane} style={{ width: previewWidth }}>
+    <>
+      {/*
+        A flex sibling rather than a child of the pane: the pane scrolls, and an
+        absolutely-positioned grip inside it would scroll away with the content.
+      */}
       <div
         className={styles.resizer}
         onMouseDown={startResize}
@@ -61,48 +65,50 @@ const PreviewPane: React.FC = () => {
         aria-orientation="vertical"
         aria-label="Resize details pane"
       />
-      <div className={styles.header}>
-        <span className={styles.headerLabel}>Details</span>
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={() => togglePreview()}
-          title="Close preview pane"
-          aria-label="Close preview pane"
-        >
-          <Icon name="close" size={14} />
-        </button>
-      </div>
-
-      {!current ? (
-        <div className={styles.empty}>
-          {selection.size > 1 ? `${selection.size} items selected` : 'No file selected'}
+      <aside className={styles.pane} style={{ width: previewWidth }}>
+        <div className={styles.header}>
+          <span className={styles.headerLabel}>Details</span>
+          <button
+            type="button"
+            className={styles.closeBtn}
+            onClick={() => togglePreview()}
+            title="Close preview pane"
+            aria-label="Close preview pane"
+          >
+            <Icon name="close" size={14} />
+          </button>
         </div>
-      ) : (
-        <div className={styles.body}>
-          <div className={styles.previewBox}>
-            {/* 'contain' so the preview never distorts or crops the picture. */}
-            <Thumbnail item={current} size={previewWidth - 40} fit="contain" />
+
+        {!current ? (
+          <div className={styles.empty}>
+            {selection.size > 1 ? `${selection.size} items selected` : 'No file selected'}
           </div>
-          <div className={styles.name}>{current.name}</div>
+        ) : (
+          <div className={styles.body}>
+            <div className={styles.previewBox}>
+              {/* 'contain' so the preview never distorts or crops the picture. */}
+              <Thumbnail item={current} size={previewWidth - 40} fit="contain" />
+            </div>
+            <div className={styles.name}>{current.name}</div>
 
-          <dl className={styles.meta}>
-            <dt className={styles.metaKey}>Type</dt>
-            <dd className={styles.metaVal}>{kindLabel(current)}</dd>
+            <dl className={styles.meta}>
+              <dt className={styles.metaKey}>Type</dt>
+              <dd className={styles.metaVal}>{kindLabel(current)}</dd>
 
-            <dt className={styles.metaKey}>Size</dt>
-            <dd className={styles.metaVal}>
-              {current.isDirectory ? '—' : formatBytes(current.size)}
-            </dd>
+              <dt className={styles.metaKey}>Size</dt>
+              <dd className={styles.metaVal}>
+                {current.isDirectory ? '—' : formatBytes(current.size)}
+              </dd>
 
-            <dt className={styles.metaKey}>Date modified</dt>
-            <dd className={styles.metaVal}>{formatDateTime(current.modified)}</dd>
-          </dl>
+              <dt className={styles.metaKey}>Date modified</dt>
+              <dd className={styles.metaVal}>{formatDateTime(current.modified)}</dd>
+            </dl>
 
-          {isTextLike && text !== null && <pre className={styles.textPreview}>{text}</pre>}
-        </div>
-      )}
-    </aside>
+            {isTextLike && text !== null && <pre className={styles.textPreview}>{text}</pre>}
+          </div>
+        )}
+      </aside>
+    </>
   )
 }
 
