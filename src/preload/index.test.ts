@@ -220,14 +220,6 @@ describe('send-based methods', () => {
     api.openFullDiskAccessSettings()
     expect(ipcRenderer.send).toHaveBeenCalledWith(IPC.openFullDiskAccessSettings)
   })
-  it('windowMinimize', () => {
-    api.windowMinimize()
-    expect(ipcRenderer.send).toHaveBeenCalledWith(IPC.windowMinimize)
-  })
-  it('windowToggleMaximize', () => {
-    api.windowToggleMaximize()
-    expect(ipcRenderer.send).toHaveBeenCalledWith(IPC.windowToggleMaximize)
-  })
   it('windowClose', () => {
     api.windowClose()
     expect(ipcRenderer.send).toHaveBeenCalledWith(IPC.windowClose)
@@ -264,23 +256,6 @@ describe('subscription (on*) methods', () => {
     api = getExposedApi()
     vi.mocked(ipcRenderer.on).mockClear()
     vi.mocked(ipcRenderer.removeListener).mockClear()
-  })
-
-  it('onMaximizeChange registers, forwards arg, and unsubscribes', () => {
-    const cb = vi.fn()
-    const unsub = api.onMaximizeChange(cb) as () => void
-    expect(ipcRenderer.on).toHaveBeenCalledWith(IPC.windowMaximizeChanged, expect.any(Function))
-    const listener = vi.mocked(ipcRenderer.on).mock.calls[0][1] as (
-      e: unknown,
-      v: unknown
-    ) => void
-    listener({}, true)
-    expect(cb).toHaveBeenCalledWith(true)
-    unsub()
-    expect(ipcRenderer.removeListener).toHaveBeenCalledWith(
-      IPC.windowMaximizeChanged,
-      listener
-    )
   })
 
   it('onFullScreenChange registers, forwards arg, and unsubscribes', () => {

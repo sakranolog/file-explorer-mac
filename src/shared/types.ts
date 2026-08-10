@@ -195,13 +195,12 @@ export interface FileExplorerApi {
   /** Resolve the absolute path of a File from a drop/transfer (Electron webUtils). */
   getPathForFile(file: File): string
 
-  // Frameless window controls (custom title-bar chrome).
-  windowMinimize(): void
-  windowToggleMaximize(): void
+  // Window controls. Minimise/zoom are the native traffic lights' job; this is
+  // only what the app itself drives.
+  /** Closes the window — used when the last tab is closed. */
   windowClose(): void
   /** Opens a new, independent File Explorer window. */
   windowNew(): void
-  onMaximizeChange(cb: (isMaximized: boolean) => void): () => void
   /** Fired on entering/leaving full screen, where macOS hides the traffic lights. */
   onFullScreenChange(cb: (isFullScreen: boolean) => void): () => void
   /** Subscribe to copy/move progress; returns an unsubscribe function. */
@@ -251,11 +250,8 @@ export const IPC = {
   openWith: 'fs:openWith',
   openInTerminal: 'fs:openInTerminal',
   opProgress: 'fs:opProgress',
-  windowMinimize: 'win:minimize',
-  windowToggleMaximize: 'win:toggleMaximize',
   windowClose: 'win:close',
   windowNew: 'win:new',
-  windowMaximizeChanged: 'win:maximizeChanged',
   windowFullScreenChanged: 'win:fullScreenChanged',
   navigateToPath: 'app:navigateToPath',
   updateCheck: 'update:check',
