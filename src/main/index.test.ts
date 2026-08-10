@@ -427,6 +427,26 @@ describe('createWindow branches', () => {
     expect(win.webContents.send).toHaveBeenCalledWith(IPC.windowMaximizeChanged, false)
   })
 
+  it('emits full-screen-changed on entering and leaving full screen', async () => {
+    await loadModule()
+    const win = createdWindows[0]
+    win.emit('enter-full-screen')
+    expect(win.webContents.send).toHaveBeenCalledWith(IPC.windowFullScreenChanged, true)
+    win.emit('leave-full-screen')
+    expect(win.webContents.send).toHaveBeenCalledWith(IPC.windowFullScreenChanged, false)
+  })
+
+  it('keeps the native macOS traffic lights instead of drawing window controls', async () => {
+    await loadModule()
+    const cfg = (BrowserWindowMock as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    // `frame: false` would suppress the traffic lights along with the title bar.
+    expect(cfg.frame).toBeUndefined()
+    expect(cfg.titleBarStyle).toBe('hidden')
+    // On-screen and inset, not parked off-canvas as they were previously.
+    expect(cfg.trafficLightPosition.x).toBeGreaterThan(0)
+    expect(cfg.trafficLightPosition.y).toBeGreaterThan(0)
+  })
+
   it('window open handler opens http externally and denies; denies other schemes', async () => {
     await loadModule()
     const win = createdWindows[0]

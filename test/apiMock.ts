@@ -54,6 +54,7 @@ export function createApiMock(): ApiMock {
     windowClose: vi.fn(),
     windowNew: vi.fn(),
     onMaximizeChange: vi.fn().mockReturnValue(unsub),
+    onFullScreenChange: vi.fn().mockReturnValue(unsub),
     onOpProgress: vi.fn().mockReturnValue(unsub),
     onOpenPath: vi.fn().mockReturnValue(unsub),
     checkForUpdates: vi.fn(),

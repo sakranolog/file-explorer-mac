@@ -69,6 +69,7 @@ describe('IPC channel map', () => {
         'windowClose',
         'windowNew',
         'windowMaximizeChanged',
+        'windowFullScreenChanged',
         'navigateToPath',
         'updateCheck',
         'updateInstall',
