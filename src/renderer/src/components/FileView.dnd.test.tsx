@@ -257,19 +257,38 @@ describe('FileView — column resize (details view)', () => {
     expect(useExplorerStore.getState().columnWidths.type).toBe(175) // 150 + 25
   })
 
-  it('dragging the size resizer updates the size width', () => {
+  it('dragging the name resizer updates the name width', () => {
     const { container } = render(<FileView />)
-    const resizer = container.querySelector('.headerCellSize .resizer') as HTMLElement
+    const resizer = container.querySelector('.headerCell .resizer') as HTMLElement
     fireEvent.mouseDown(resizer, { clientX: 0 })
-    fireEvent.mouseMove(window, { clientX: 30 })
+    fireEvent.mouseMove(window, { clientX: 40 })
     fireEvent.mouseUp(window)
-    expect(useExplorerStore.getState().columnWidths.size).toBe(130) // 100 + 30
+    expect(useExplorerStore.getState().columnWidths.name).toBe(360) // 320 + 40
+  })
+
+  it('gives Size no grip — it is the column that absorbs the leftover width', () => {
+    const { container } = render(<FileView />)
+    expect(container.querySelector('.headerCellSize .resizer')).toBeNull()
+    const header = container.querySelector('.headerRow') as HTMLElement
+    expect(header.style.gridTemplateColumns).toContain('minmax(80px, 1fr)')
+  })
+
+  it('caps a resize so the fixed columns cannot crush the Size column', () => {
+    // jsdom reports 0 for clientWidth, so give the root a real measured width.
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(700)
+    const { container } = render(<FileView />)
+    const resizer = container.querySelector('.headerCell .resizer') as HTMLElement
+    fireEvent.mouseDown(resizer, { clientX: 0 })
+    fireEvent.mouseMove(window, { clientX: 5000 })
+    fireEvent.mouseUp(window)
+    // content 700 - 16 padding = 684, minus date 180 + type 150 and the 80 floor.
+    expect(useExplorerStore.getState().columnWidths.name).toBe(684 - 180 - 150 - 80)
   })
 
   it('clicking any resizer does not trigger the column sort', () => {
     useExplorerStore.setState({ sortKey: 'name', sortDir: 'asc' })
     const { container } = render(<FileView />)
-    for (const sel of ['.headerCellDate', '.headerCellType', '.headerCellSize']) {
+    for (const sel of ['.headerCell', '.headerCellDate', '.headerCellType']) {
       const resizer = container.querySelector(`${sel} .resizer`) as HTMLElement
       fireEvent.click(resizer)
     }
@@ -279,11 +298,11 @@ describe('FileView — column resize (details view)', () => {
   })
 
   it('honours persisted column widths from the store', () => {
-    useExplorerStore.setState({ columnWidths: { date: 200, type: 160, size: 120 } })
+    useExplorerStore.setState({ columnWidths: { name: 280, date: 200, type: 160 } })
     const { container } = render(<FileView />)
     const header = container.querySelector('.headerRow') as HTMLElement
+    expect(header.style.gridTemplateColumns).toContain('280px')
     expect(header.style.gridTemplateColumns).toContain('200px')
     expect(header.style.gridTemplateColumns).toContain('160px')
-    expect(header.style.gridTemplateColumns).toContain('120px')
   })
 })

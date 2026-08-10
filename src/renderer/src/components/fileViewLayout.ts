@@ -39,6 +39,27 @@ const METRICS: Record<ViewMode, CellMetrics> = {
   'extra-large': { cellW: 152, cellH: 158, colGap: 4, rowGap: 4, padX: 12, padTop: 12, padBottom: 12, headerHeight: 0, fullWidth: false }
 }
 
+/**
+ * Details view columns. Name, Date and Type carry explicit widths and Size takes
+ * whatever is left over, so a resize grip only ever moves the boundary it sits
+ * on — it tracks the cursor instead of shoving the other columns around.
+ */
+export const DETAILS_COLUMN_DEFAULTS = { name: 320, date: 180, type: 150 }
+
+/** Floor for the filling Size column, so the fixed columns can't crush it. */
+export const DETAILS_MIN_FILL = 80
+
+/** Horizontal padding of the details content box; mirrors METRICS.details.padX. */
+export const DETAILS_PAD_X = 8
+
+/** `grid-template-columns` for a details header/row at the given widths. */
+export function detailsGridTemplate(widths: Record<string, number>): string {
+  const name = widths.name ?? DETAILS_COLUMN_DEFAULTS.name
+  const date = widths.date ?? DETAILS_COLUMN_DEFAULTS.date
+  const type = widths.type ?? DETAILS_COLUMN_DEFAULTS.type
+  return `${name}px ${date}px ${type}px minmax(${DETAILS_MIN_FILL}px, 1fr)`
+}
+
 export interface GridLayout {
   columns: number
   cellW: number
