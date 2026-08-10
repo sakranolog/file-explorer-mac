@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useExplorerStore, PREVIEW_MIN_WIDTH, PREVIEW_MAX_WIDTH } from './explorerStore'
+import {
+  useExplorerStore,
+  PREVIEW_MIN_WIDTH,
+  PREVIEW_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_MAX_WIDTH
+} from './explorerStore'
 import { HOME_PATH } from '@/utils/pathUtils'
 import { resetExplorerStore } from '@test/storeHelpers'
 import { installApiMock, type ApiMock } from '@test/apiMock'
 import { makeFileItem, makeQuickLink, makeDrive } from '@test/factories'
-import type { FileItem, OpProgress, Result } from '@shared/types'
+import type { CloudInfo, FileItem, OpProgress, Result } from '@shared/types'
 
 let api: ApiMock
 beforeEach(() => {
@@ -399,9 +405,9 @@ describe('cloud actions', () => {
   })
 
   it('discards a lookup that resolves after the menu moved to another item', async () => {
-    let resolveFirst!: (v: unknown) => void
+    let resolveFirst!: (v: Result<CloudInfo | null>) => void
     api.getCloudInfo
-      .mockReturnValueOnce(new Promise((r) => (resolveFirst = r)))
+      .mockReturnValueOnce(new Promise<Result<CloudInfo | null>>((r) => (resolveFirst = r)))
       .mockResolvedValueOnce({ ok: true, data: null })
 
     useExplorerStore.getState().openContextMenu(1, 2, '/cloud/a.txt')
@@ -512,5 +518,17 @@ describe('setPreviewWidth', () => {
     expect(s().previewWidth).toBe(PREVIEW_MAX_WIDTH)
     s().setPreviewWidth(0)
     expect(s().previewWidth).toBe(PREVIEW_MIN_WIDTH)
+  })
+})
+
+describe('setSidebarWidth', () => {
+  it('rounds and clamps to the sidebar limits', () => {
+    const s = () => useExplorerStore.getState()
+    s().setSidebarWidth(300.6)
+    expect(s().sidebarWidth).toBe(301)
+    s().setSidebarWidth(10_000)
+    expect(s().sidebarWidth).toBe(SIDEBAR_MAX_WIDTH)
+    s().setSidebarWidth(0)
+    expect(s().sidebarWidth).toBe(SIDEBAR_MIN_WIDTH)
   })
 })

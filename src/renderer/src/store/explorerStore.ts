@@ -43,11 +43,17 @@ export const PREVIEW_DEFAULT_WIDTH = 300
 export const PREVIEW_MIN_WIDTH = 220
 export const PREVIEW_MAX_WIDTH = 720
 
+/** Sidebar sizing. Default matches --sidebar-w in tokens.css. */
+export const SIDEBAR_DEFAULT_WIDTH = 240
+export const SIDEBAR_MIN_WIDTH = 160
+export const SIDEBAR_MAX_WIDTH = 520
+
 /** Persisted user preferences (localStorage). */
 interface Prefs {
   pinnedLinks: QuickLink[]
   previewOpen: boolean
   previewWidth: number
+  sidebarWidth: number
   groupBy: GroupKey
   columnWidths: Record<string, number>
   viewMode: ViewMode
@@ -128,6 +134,7 @@ interface ExplorerState {
   // Panels & pins
   previewOpen: boolean
   previewWidth: number
+  sidebarWidth: number
   pinnedLinks: QuickLink[]
 
   /** Cloud sync folders on this machine, listed under "This PC". */
@@ -229,6 +236,7 @@ interface ExplorerState {
   setColumnWidth: (col: string, width: number) => void
   togglePreview: () => void
   setPreviewWidth: (width: number) => void
+  setSidebarWidth: (width: number) => void
 
   // Cloud (Dropbox / OneDrive / …)
   loadCloudRoots: () => Promise<void>
@@ -303,6 +311,7 @@ function persist(s: ExplorerState): void {
     pinnedLinks: s.pinnedLinks,
     previewOpen: s.previewOpen,
     previewWidth: s.previewWidth,
+    sidebarWidth: s.sidebarWidth,
     groupBy: s.groupBy,
     columnWidths: s.columnWidths,
     viewMode: s.viewMode,
@@ -337,6 +346,7 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
 
   previewOpen: initialPrefs.previewOpen ?? false,
   previewWidth: initialPrefs.previewWidth ?? PREVIEW_DEFAULT_WIDTH,
+  sidebarWidth: initialPrefs.sidebarWidth ?? SIDEBAR_DEFAULT_WIDTH,
   pinnedLinks: initialPrefs.pinnedLinks ?? [],
 
   cloudRoots: [],
@@ -789,6 +799,13 @@ export const useExplorerStore = create<ExplorerState>((set, get) => ({
   setPreviewWidth: (width) => {
     set({
       previewWidth: Math.round(Math.min(PREVIEW_MAX_WIDTH, Math.max(PREVIEW_MIN_WIDTH, width)))
+    })
+    persist(get())
+  },
+
+  setSidebarWidth: (width) => {
+    set({
+      sidebarWidth: Math.round(Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width)))
     })
     persist(get())
   },
