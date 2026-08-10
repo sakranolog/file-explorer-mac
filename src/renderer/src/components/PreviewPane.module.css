@@ -1,12 +1,37 @@
 .pane {
-  width: 300px;
+  /* Width is driven by the store so the drag handle can persist it. */
   flex-shrink: 0;
+  position: relative;
   border-left: 1px solid var(--stroke);
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
   overflow: auto;
   border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+
+/* Drag grip on the pane's left edge. */
+.resizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 3;
+}
+.resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0;
+}
+.resizer:hover::after {
+  opacity: 1;
 }
 
 .header {

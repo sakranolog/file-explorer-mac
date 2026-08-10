@@ -4,6 +4,7 @@ import { existsSync, writeFileSync, statSync } from 'fs'
 import { IPC, type ConflictPolicy } from '../shared/types'
 import * as FS from './fileSystem'
 import * as CB from './clipboard'
+import { getCloudRoots, cloudInfo, openOnWeb, makeAvailableOffline } from './cloud'
 import { trackAppStarted } from './analytics'
 import { initAutoUpdater, checkForUpdates, installUpdate } from './updater'
 import { installAppMenu } from './menu'
@@ -225,6 +226,12 @@ function registerIpc(): void {
   )
   ipcMain.handle(IPC.move, (e, src: string[], dest: string, policy: ConflictPolicy) =>
     FS.move(src, dest, policy, (p) => e.sender.send(IPC.opProgress, p))
+  )
+  ipcMain.handle(IPC.cloudRoots, () => getCloudRoots())
+  ipcMain.handle(IPC.cloudInfo, (_e, p: string) => cloudInfo(p))
+  ipcMain.handle(IPC.cloudOpenWeb, (_e, p: string) => openOnWeb(p))
+  ipcMain.handle(IPC.cloudMakeOffline, (e, paths: string[]) =>
+    makeAvailableOffline(paths, (p) => e.sender.send(IPC.opProgress, p))
   )
   ipcMain.handle(IPC.search, (_e, root: string, q: string) => FS.search(root, q))
   ipcMain.handle(IPC.getProperties, (_e, p: string) => FS.getProperties(p))

@@ -42,6 +42,11 @@ const api: FileExplorerApi = {
 
   getPathForFile: (file) => webUtils.getPathForFile(file),
 
+  getCloudRoots: () => ipcRenderer.invoke(IPC.cloudRoots),
+  getCloudInfo: (p) => ipcRenderer.invoke(IPC.cloudInfo, p),
+  openCloudOnWeb: (p) => ipcRenderer.invoke(IPC.cloudOpenWeb, p),
+  makeAvailableOffline: (paths) => ipcRenderer.invoke(IPC.cloudMakeOffline, paths),
+
   windowClose: () => ipcRenderer.send(IPC.windowClose),
   windowNew: () => ipcRenderer.send(IPC.windowNew),
   onFullScreenChange: (cb) => {

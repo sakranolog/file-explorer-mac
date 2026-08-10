@@ -16,7 +16,7 @@ describe('IPC channel map', () => {
   })
 
   it('has every channel value namespaced with a "<scope>:<name>" prefix', () => {
-    const allowedScopes = new Set(['fs', 'app', 'win', 'dnd', 'update', 'clip'])
+    const allowedScopes = new Set(['fs', 'app', 'win', 'dnd', 'update', 'clip', 'cloud'])
     for (const value of Object.values(IPC)) {
       expect(value).toMatch(/^[a-z]+:[A-Za-z]+$/)
       expect(allowedScopes.has(value.split(':')[0])).toBe(true)
@@ -64,6 +64,10 @@ describe('IPC channel map', () => {
         'openWith',
         'openInTerminal',
         'opProgress',
+        'cloudRoots',
+        'cloudInfo',
+        'cloudOpenWeb',
+        'cloudMakeOffline',
         'windowClose',
         'windowNew',
         'windowFullScreenChanged',

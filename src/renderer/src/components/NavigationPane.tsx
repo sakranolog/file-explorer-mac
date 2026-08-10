@@ -103,6 +103,7 @@ const NavigationPane: React.FC = () => {
   const quickLinks = useExplorerStore((s) => s.quickLinks)
   const pinnedLinks = useExplorerStore((s) => s.pinnedLinks)
   const drives = useExplorerStore((s) => s.drives)
+  const cloudRoots = useExplorerStore((s) => s.cloudRoots)
   const unpinFromQuickAccess = useExplorerStore((s) => s.unpinFromQuickAccess)
   const [quickOpen, setQuickOpen] = useState(true)
   const [pcOpen, setPcOpen] = useState(true)
@@ -165,6 +166,16 @@ const NavigationPane: React.FC = () => {
                 label={d.name}
                 depth={0}
                 icon={<FileGlyph kind="drive" size={18} />}
+              />
+            ))}
+            {/* Dropbox, OneDrive, Google Drive, iCloud… detected at startup. */}
+            {cloudRoots.map((c) => (
+              <TreeNode
+                key={c.root}
+                path={c.root}
+                label={c.label}
+                depth={0}
+                icon={<Icon name="cloud" size={18} />}
               />
             ))}
           </div>

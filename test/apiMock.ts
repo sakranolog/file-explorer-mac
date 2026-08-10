@@ -41,6 +41,11 @@ export function createApiMock(): ApiMock {
     copy: vi.fn().mockResolvedValue({ ok: true, data: { moves: [] } }),
     move: vi.fn().mockResolvedValue({ ok: true, data: { moves: [] } }),
     search: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+    // Default: nothing on this machine is cloud-synced.
+    getCloudRoots: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+    getCloudInfo: vi.fn().mockResolvedValue({ ok: true, data: null }),
+    openCloudOnWeb: vi.fn().mockResolvedValue({ ok: true, data: '' }),
+    makeAvailableOffline: vi.fn().mockResolvedValue({ ok: true, data: { files: 0 } }),
     getProperties: vi.fn().mockResolvedValue({ ok: true, data: makePropertyInfo() }),
     getFolderSize: vi.fn().mockResolvedValue({ ok: true, data: makeFolderSize() }),
     readTextPreview: vi.fn().mockResolvedValue({ ok: true, data: '' }),

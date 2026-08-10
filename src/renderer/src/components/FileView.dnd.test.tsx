@@ -306,3 +306,39 @@ describe('FileView — column resize (details view)', () => {
     expect(header.style.gridTemplateColumns).toContain('160px')
   })
 })
+
+describe('FileView — middle-click opens folders in a new tab', () => {
+  beforeEach(() => {
+    useExplorerStore.setState({ viewMode: 'list' })
+  })
+
+  it('opens a folder in a background tab', () => {
+    const { container } = render(<FileView />)
+    const before = useExplorerStore.getState().activeTabId
+    fireEvent.mouseDown(row(container, '/p/docs'), { button: 1 })
+    const s = useExplorerStore.getState()
+    expect(s.tabs).toHaveLength(2)
+    expect(s.tabs[1].history).toEqual(['/p/docs'])
+    // Background, like a browser: focus stays where it was.
+    expect(s.activeTabId).toBe(before)
+  })
+
+  it('ignores middle-click on a file', () => {
+    const { container } = render(<FileView />)
+    fireEvent.mouseDown(row(container, '/p/a.txt'), { button: 1 })
+    expect(useExplorerStore.getState().tabs).toHaveLength(1)
+  })
+
+  it('leaves left-click alone', () => {
+    const { container } = render(<FileView />)
+    fireEvent.mouseDown(row(container, '/p/docs'), { button: 0 })
+    expect(useExplorerStore.getState().tabs).toHaveLength(1)
+  })
+
+  it('suppresses the middle aux-click so it cannot paste or scroll', () => {
+    const { container } = render(<FileView />)
+    const ev = new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true })
+    fireEvent(row(container, '/p/docs'), ev)
+    expect(ev.defaultPrevented).toBe(true)
+  })
+})
