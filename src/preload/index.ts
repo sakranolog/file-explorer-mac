@@ -51,6 +51,11 @@ const api: FileExplorerApi = {
     ipcRenderer.on(IPC.windowMaximizeChanged, listener)
     return () => ipcRenderer.removeListener(IPC.windowMaximizeChanged, listener)
   },
+  onFullScreenChange: (cb) => {
+    const listener = (_e: unknown, isFull: boolean): void => cb(isFull)
+    ipcRenderer.on(IPC.windowFullScreenChanged, listener)
+    return () => ipcRenderer.removeListener(IPC.windowFullScreenChanged, listener)
+  },
   onOpProgress: (cb) => {
     const listener = (_e: unknown, p: OpProgress): void => cb(p)
     ipcRenderer.on(IPC.opProgress, listener)

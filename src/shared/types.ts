@@ -202,6 +202,8 @@ export interface FileExplorerApi {
   /** Opens a new, independent File Explorer window. */
   windowNew(): void
   onMaximizeChange(cb: (isMaximized: boolean) => void): () => void
+  /** Fired on entering/leaving full screen, where macOS hides the traffic lights. */
+  onFullScreenChange(cb: (isFullScreen: boolean) => void): () => void
   /** Subscribe to copy/move progress; returns an unsubscribe function. */
   onOpProgress(cb: (p: OpProgress) => void): () => void
   /** Fired when the OS asks this app to open a folder (default-handler / "Open With"). */
@@ -254,6 +256,7 @@ export const IPC = {
   windowClose: 'win:close',
   windowNew: 'win:new',
   windowMaximizeChanged: 'win:maximizeChanged',
+  windowFullScreenChanged: 'win:fullScreenChanged',
   navigateToPath: 'app:navigateToPath',
   updateCheck: 'update:check',
   updateInstall: 'update:install',

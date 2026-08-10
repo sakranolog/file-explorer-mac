@@ -283,6 +283,23 @@ describe('subscription (on*) methods', () => {
     )
   })
 
+  it('onFullScreenChange registers, forwards arg, and unsubscribes', () => {
+    const cb = vi.fn()
+    const unsub = api.onFullScreenChange(cb) as () => void
+    expect(ipcRenderer.on).toHaveBeenCalledWith(IPC.windowFullScreenChanged, expect.any(Function))
+    const listener = vi.mocked(ipcRenderer.on).mock.calls[0][1] as (
+      e: unknown,
+      v: unknown
+    ) => void
+    listener({}, true)
+    expect(cb).toHaveBeenCalledWith(true)
+    unsub()
+    expect(ipcRenderer.removeListener).toHaveBeenCalledWith(
+      IPC.windowFullScreenChanged,
+      listener
+    )
+  })
+
   it('onOpProgress registers, forwards arg, and unsubscribes', () => {
     const cb = vi.fn()
     const progress = { kind: 'copy', current: 1, total: 2 }

@@ -89,11 +89,12 @@ function createWindow(): BrowserWindow {
     show: false,
     title: 'File Explorer',
     backgroundColor: '#f3f3f3',
-    // Frameless so we can render the title bar / tab strip ourselves.
-    frame: false,
+    // Hide the system title bar so we can render the tab strip ourselves, but
+    // keep the native traffic lights. `frame: false` would suppress those too,
+    // which is why the window controls used to be drawn in the renderer.
     titleBarStyle: 'hidden',
-    // Push macOS traffic lights off-screen; we draw our own controls.
-    trafficLightPosition: { x: -100, y: -100 },
+    // Inset the lights and centre them vertically in our 40px bar (--titlebar-h).
+    trafficLightPosition: { x: 20, y: 14 },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
@@ -148,6 +149,14 @@ function createWindow(): BrowserWindow {
   }
   win.on('maximize', emitMaximize)
   win.on('unmaximize', emitMaximize)
+
+  // macOS hides the traffic lights in full screen, so the title bar has to give
+  // back the space it reserves for them.
+  const emitFullScreen = (isFullScreen: boolean) => (): void => {
+    win.webContents.send(IPC.windowFullScreenChanged, isFullScreen)
+  }
+  win.on('enter-full-screen', emitFullScreen(true))
+  win.on('leave-full-screen', emitFullScreen(false))
 
   // Only hand http(s) URLs to the OS; never open arbitrary schemes externally.
   win.webContents.setWindowOpenHandler(({ url }) => {
