@@ -10,11 +10,12 @@
 
 /*
  * Clears the native macOS traffic lights, which sit at x: 20 (see
- * trafficLightPosition in src/main/index.ts) and span ~52px. Dropped in full
- * screen, where macOS hides them.
+ * trafficLightPosition in src/main/index.ts) and span ~52px, then adds a gap so
+ * the first tab doesn't crowd them. Dropped in full screen, where macOS hides
+ * the lights.
  */
 .barInset {
-  padding-left: 80px;
+  padding-left: 96px;
 }
 
 .tabStrip {
