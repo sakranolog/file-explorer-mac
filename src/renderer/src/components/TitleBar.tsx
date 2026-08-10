@@ -76,8 +76,6 @@ const TitleBar: React.FC = () => {
 
   return (
     <div className={`app-drag ${styles.bar} ${fullScreen ? '' : styles.barInset}`}>
-      <FileGlyph kind="folder" size={18} className={styles.appIcon} />
-
       <div className={styles.tabStrip}>
         {tabs.map((tab) => (
           <TabButton

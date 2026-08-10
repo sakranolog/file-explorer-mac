@@ -144,12 +144,6 @@ function createWindow(): BrowserWindow {
     })
   }
 
-  const emitMaximize = (): void => {
-    win.webContents.send(IPC.windowMaximizeChanged, win.isMaximized())
-  }
-  win.on('maximize', emitMaximize)
-  win.on('unmaximize', emitMaximize)
-
   // macOS hides the traffic lights in full screen, so the title bar has to give
   // back the space it reserves for them.
   const emitFullScreen = (isFullScreen: boolean) => (): void => {
@@ -259,13 +253,6 @@ function registerIpc(): void {
   const senderWindow = (e: IpcMainEvent): BrowserWindow | null =>
     BrowserWindow.fromWebContents(e.sender)
 
-  ipcMain.on(IPC.windowMinimize, (e) => senderWindow(e)?.minimize())
-  ipcMain.on(IPC.windowToggleMaximize, (e) => {
-    const w = senderWindow(e)
-    if (!w) return
-    if (w.isMaximized()) w.unmaximize()
-    else w.maximize()
-  })
   ipcMain.on(IPC.windowClose, (e) => senderWindow(e)?.close())
   ipcMain.on(IPC.windowNew, () => createWindow())
 

@@ -17,11 +17,6 @@
   padding-left: 80px;
 }
 
-.appIcon {
-  margin: 0 8px 11px 4px;
-  flex-shrink: 0;
-}
-
 .tabStrip {
   display: flex;
   align-items: flex-end;

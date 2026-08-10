@@ -9,8 +9,8 @@ describe('IPC channel map', () => {
     expect(IPC.getHomeDir).toBe('fs:getHomeDir')
     expect(IPC.startDrag).toBe('dnd:startDrag')
     expect(IPC.openFullDiskAccessSettings).toBe('app:openFullDiskAccessSettings')
-    expect(IPC.windowMinimize).toBe('win:minimize')
-    expect(IPC.windowMaximizeChanged).toBe('win:maximizeChanged')
+    expect(IPC.windowClose).toBe('win:close')
+    expect(IPC.windowFullScreenChanged).toBe('win:fullScreenChanged')
     expect(IPC.navigateToPath).toBe('app:navigateToPath')
     expect(IPC.opProgress).toBe('fs:opProgress')
   })
@@ -64,11 +64,8 @@ describe('IPC channel map', () => {
         'openWith',
         'openInTerminal',
         'opProgress',
-        'windowMinimize',
-        'windowToggleMaximize',
         'windowClose',
         'windowNew',
-        'windowMaximizeChanged',
         'windowFullScreenChanged',
         'navigateToPath',
         'updateCheck',
