@@ -10,6 +10,8 @@ import styles from './PreviewPane.module.css'
 /** Right-side details/preview panel. */
 const PreviewPane: React.FC = () => {
   const previewOpen = useExplorerStore((s) => s.previewOpen)
+  const previewWidth = useExplorerStore((s) => s.previewWidth)
+  const setPreviewWidth = useExplorerStore((s) => s.setPreviewWidth)
   const selection = useExplorerStore((s) => s.selection)
   const items = useExplorerStore((s) => s.items)
   const togglePreview = useExplorerStore((s) => s.togglePreview)
@@ -34,10 +36,31 @@ const PreviewPane: React.FC = () => {
     }
   }, [textPath])
 
+  // The pane sits at the right edge, so dragging its grip left widens it.
+  const startResize = (e: React.MouseEvent): void => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = previewWidth
+    const onMove = (ev: MouseEvent): void => setPreviewWidth(startW - (ev.clientX - startX))
+    const onUp = (): void => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   if (!previewOpen) return null
 
   return (
-    <aside className={styles.pane}>
+    <aside className={styles.pane} style={{ width: previewWidth }}>
+      <div
+        className={styles.resizer}
+        onMouseDown={startResize}
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize details pane"
+      />
       <div className={styles.header}>
         <span className={styles.headerLabel}>Details</span>
         <button
@@ -58,7 +81,8 @@ const PreviewPane: React.FC = () => {
       ) : (
         <div className={styles.body}>
           <div className={styles.previewBox}>
-            <Thumbnail item={current} size={220} />
+            {/* 'contain' so the preview never distorts or crops the picture. */}
+            <Thumbnail item={current} size={previewWidth - 40} fit="contain" />
           </div>
           <div className={styles.name}>{current.name}</div>
 

@@ -90,6 +90,7 @@ const FileView: React.FC = () => {
   const columnWidths = useExplorerStore((s) => s.columnWidths)
 
   const setSort = useExplorerStore((s) => s.setSort)
+  const openInNewTab = useExplorerStore((s) => s.openInNewTab)
   const setColumnWidth = useExplorerStore((s) => s.setColumnWidth)
   const clearSelection = useExplorerStore((s) => s.clearSelection)
   const openContextMenu = useExplorerStore((s) => s.openContextMenu)
@@ -390,6 +391,15 @@ const FileView: React.FC = () => {
       onClick: (e) => handleItemClick(item, e),
       onDoubleClick: () => handleItemDoubleClick(item),
       onContextMenu: (e) => handleItemContextMenu(item, e),
+      // Middle-click opens a folder in a background tab, like a browser link.
+      onMouseDown: (e) => {
+        if (e.button === 1 && item.isDirectory) {
+          e.preventDefault()
+          e.stopPropagation()
+          openInNewTab(item.path)
+        }
+      },
+      onAuxClick: (e) => e.button === 1 && e.preventDefault(),
       draggable: renamingPath !== item.path,
       onDragStart: (e) => onItemDragStart(item, e)
     }
